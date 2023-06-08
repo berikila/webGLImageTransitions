@@ -22,7 +22,7 @@ let sketch = new Sketch({
 		mat2 getRotM(float angle) {
 		    float s = sin(angle);
 		    float c = cos(angle);
-		    return mat2(c, -s, s, c);
+		    return mat2(c, s, -s, c);
 		}
 		const float PI = 3.1415;
 		const float angle1 = PI *0.25;
