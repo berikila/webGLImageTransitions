@@ -11,7 +11,7 @@ class Sketch {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.width, this.height);
     this.renderer.setClearColor(0xeeeeee, 1);
-    this.duration = opts.duration || 1;
+    this.duration = opts.duration || 1.5;
     this.debug = opts.debug || false
     this.easing = opts.easing || 'easeInOut'
 
@@ -142,7 +142,7 @@ class Sketch {
         radius: { type: "f", value: 0 },
         texture1: { type: "f", value: this.textures[0] },
         texture2: { type: "f", value: this.textures[1] },
-        displacement: { type: "f", value: new THREE.TextureLoader().load('img/disp1.jpg') },
+        displacement: { type: "f", value: new THREE.TextureLoader().load('img/displacementa.jpg') },
         resolution: { type: "v4", value: new THREE.Vector4() },
       },
       // wireframe: true,
