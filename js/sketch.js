@@ -1,3 +1,9 @@
+images=["/img/img61.jpg",
+        "/img/img62.jpg",
+        "/img/img63.jpg",
+        "/img/img64.jpg"
+      ];
+
 
 class Sketch {
   constructor(opts) {
@@ -19,7 +25,7 @@ class Sketch {
 
 
     this.container = document.getElementById("slider");
-    this.images = JSON.parse(this.container.getAttribute('data-images'));
+    this.images = images;
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
     this.container.appendChild(this.renderer.domElement);
@@ -43,7 +49,7 @@ class Sketch {
       this.settings();
       this.addObjects();
       this.resize();
-      this.clickEvent();
+      // this.clickEvent();
       this.play();
     })
     
@@ -64,18 +70,34 @@ class Sketch {
     Promise.all(promises).then(() => {
       cb();
     });
+
+// Add the following code inside the initiate() function, after the Promise.all(promises) block
+window.addEventListener('scroll', () => {
+  const scrollDirection = Math.sign(window.scrollY - this.scrollY);
+  this.scrollY = window.scrollY;
+
+  if (scrollDirection === -1) {
+    // Scrolling up
+    this.prev();
+  } else if (scrollDirection === 1) {
+    // Scrolling down
+    this.next();
+  }
+});
+
+
   }
 
-  clickEvent(){
-    this.clicker.addEventListener('click',()=>{
-      this.next();
-    })
-  }
+
+
+// Update the next() method to prev() method
+
+
   settings() {
     let that = this;
     if(this.debug) this.gui = new dat.GUI();
     this.settings = {progress:0.5};
-    // if(this.debug) this.gui.add(this.settings, "progress", 0, 1, 0.01);
+    if(this.debug) this.gui.add(this.settings, "progress", 0, 1, 0.01);
 
     Object.keys(this.uniforms).forEach((item)=> {
       this.settings[item] = this.uniforms[item].value;
@@ -183,22 +205,88 @@ class Sketch {
         this.isRunning = false;
     }})
   }
+
+  prev() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    let len = this.textures.length;
+    let prevTexture = this.textures[(this.current + len - 1) % len]; // Calculate the previous texture
+    this.material.uniforms.texture2.value = prevTexture;
+    let tl = new TimelineMax();
+    tl.to(this.material.uniforms.progress, this.duration, {
+      value: 1,
+      ease: Power2[this.easing],
+      onComplete: () => {
+        console.log('FINISH');
+        this.current = (this.current + len - 1) % len; // Update the current index to the previous index
+        this.material.uniforms.texture1.value = prevTexture;
+        this.material.uniforms.progress.value = 0;
+        this.isRunning = false;
+      }
+    });
+  }
+
   render() {
     if (this.paused) return;
     this.time += 0.05;
     this.material.uniforms.time.value = this.time;
-    // this.material.uniforms.progress.value = this.settings.progress;
 
     Object.keys(this.uniforms).forEach((item)=> {
       this.material.uniforms[item].value = this.settings[item];
     });
 
-    // this.camera.position.z = 3;
-    // this.plane.rotation.y = 0.4*Math.sin(this.time)
-    // this.plane.rotation.x = 0.5*Math.sin(0.4*this.time)
-
+  
     requestAnimationFrame(this.render.bind(this));
     this.renderer.render(this.scene, this.camera);
   }
 }
+
+let sketch = new Sketch({
+	debug: true,
+	uniforms: {
+		intensity: {value: 1, type:'f', min:0., max:3}
+	},
+	fragment: `
+		uniform float time;
+		uniform float progress;
+		uniform float intensity;
+		uniform float width;
+		uniform float scaleX;
+		uniform float scaleY;
+		uniform float transition;
+		uniform float radius;
+		uniform float swipe;
+		uniform sampler2D texture1;
+		uniform sampler2D texture2;
+		uniform sampler2D displacement;
+		uniform vec4 resolution;
+		varying vec2 vUv;
+		mat2 getRotM(float angle) {
+		    float s = sin(angle);
+		    float c = cos(angle);
+		    return mat2(c, s, -s, c);
+		}
+		const float PI = 3.1415;
+		const float angle1 = PI *0.25;
+		const float angle2 = -PI *0.75;
+
+
+		void main()	{
+			vec2 newUV = (vUv - vec2(0.5))*resolution.zw + vec2(0.5);
+
+			vec4 disp = texture2D(displacement, newUV);
+			vec2 dispVec = vec2(disp.r, disp.g);
+
+			vec2 distortedPosition1 = newUV + getRotM(angle1) * dispVec * intensity * progress;
+			vec4 t1 = texture2D(texture1, distortedPosition1);
+
+			vec2 distortedPosition2 = newUV + getRotM(angle2) * dispVec * intensity * (1.0 - progress);
+			vec4 t2 = texture2D(texture2, distortedPosition2);
+
+			gl_FragColor = mix(t1, t2, progress);
+
+		}
+
+	`
+});
 
