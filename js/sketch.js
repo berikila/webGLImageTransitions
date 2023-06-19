@@ -49,6 +49,7 @@ class Sketch {
       this.settings();
       this.addObjects();
       this.resize();
+      this.scroll();
       // this.clickEvent();
       this.play();
     })
@@ -71,7 +72,12 @@ class Sketch {
       cb();
     });
 
-// Add the following code inside the initiate() function, after the Promise.all(promises) block
+
+
+  }
+
+scroll(){
+  // Add the following code inside the initiate() function, after the Promise.all(promises) block
 window.addEventListener('scroll', () => {
   const scrollDirection = Math.sign(window.scrollY - this.scrollY);
   this.scrollY = window.scrollY;
@@ -85,12 +91,8 @@ window.addEventListener('scroll', () => {
   }
 });
 
+}
 
-  }
-
-
-
-// Update the next() method to prev() method
 
 
   settings() {
